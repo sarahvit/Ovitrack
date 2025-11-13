@@ -3,9 +3,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Bg from "@/components/header/background.png";
+import Bg from "@/components/guest/background.png";
 import Logo from "@/components/header/logo3.png";
-import GoogleIcon from "@/components/header/Google.png"; // <-- novo import
+import GoogleIcon from "@/components/guest/Google.png"; // <-- novo import
 import { FormEvent, useState } from "react";
 
 export default function LoginPage() {

@@ -1,6 +1,6 @@
 // src/app/page.tsx
 import Image from "next/image";
-import Bg from "@/components/header/background.png"; // <- sua imagem
+import Bg from "@/components/guest/background.png"; // <- sua imagem
 import Logo from "@/components/header/logo3.png";
 import Link from "next/link";
 
@@ -9,13 +9,8 @@ export default function Page() {
     <main className="relative min-h-dvh">
       {/* BACKGROUND */}
       <div className="absolute inset-0 -z-10">
-        <Image
-          src={Bg}
-          alt=""                 // decorativo
-          fill                   // cobre toda a tela
-          priority
-          className="object-cover" // ajuste: cover/center
-        />
+        <Image src={Bg} alt="" fill priority className="object-cover" />
+        <div className="absolute inset-0 bg-[#172B72]/12" />
       </div>
 
       {/* CONTEÚDO (seu card já pronto) */}
