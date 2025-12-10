@@ -145,23 +145,6 @@ export default function LoginPage() {
                         >
                             Login
                         </button>
-
-                        {/* Google (com imagem) */}
-                        <button
-                            type="button"
-                            className="mx-auto block h-[46px] w-[400px] rounded-[8px] bg-[#D1E9FF] text-[14px] font-semibold text-[#1570EF] ring-1 ring-[#C7DBF8] transition hover:bg-[#D8EBFF]"
-                        >
-                            <span className="mx-auto inline-flex items-center gap-2">
-                                <Image
-                                    src={GoogleIcon}
-                                    alt="Google"
-                                    width={18}
-                                    height={18}
-                                    className="h-[18px] w-[18px] object-contain"
-                                />
-                                Continue com o Google
-                            </span>
-                        </button>
                     </form>
 
                     {/* Rodapé */}
