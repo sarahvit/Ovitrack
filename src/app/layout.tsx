@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-br">
       <body className={`${montserrat.variable} antialiased min-h-dvh bg-ovitrack bg-ovitrack-noise`}>
-        {/* Se quiser esconder o header na home, veja o passo 3 */}
+  
         {children}
       </body>
     </html>

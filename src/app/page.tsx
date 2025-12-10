@@ -1,47 +1,19 @@
-// src/app/page.tsx
+'use client'
 import Image from "next/image";
-import Bg from "@/components/guest/background.png"; // <- sua imagem
+import Bg from "@/components/guest/background.png"; 
 import Logo from "@/components/header/logo3.png";
 import Link from "next/link";
+import {Header} from "@/components/header/index"
+import {Slide} from "@/components/slide/index"
 
 export default function Page() {
   return (
-    <main className="relative min-h-dvh">
-      {/* BACKGROUND */}
-      <div className="absolute inset-0 -z-10">
-        <Image src={Bg} alt="" fill priority className="object-cover" />
-        <div className="absolute inset-0 bg-[#172B72]/12" />
-      </div>
-
-      {/* CONTEÚDO (seu card já pronto) */}
-      <section className="mx-auto flex min-h-dvh items-center justify-center px-4">
-        <div className="w-[538px] h-[498px] rounded-[20px] bg-white p-8 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-          <div className="mb-4 flex justify-center">
-            <Image src={Logo} alt="OviTrack" width={188} height={50} className="h-[50px] w-[188px] object-contain" />
-          </div>
-
-          <h1 className="mt-10 text-center text-[38px] font-bold leading-[1.1] text-[#172B72]">
-            Bem-vindo(a) ao<br />Projeto da Dengue
-          </h1>
-
-          <p className="mx-auto mt-12 w-[388px] text-center text-[22px] font-medium leading-[1.4] text-[#4D4D4D]">
-            Escolha uma opção para continuar
-          </p>
-
-          <Link
-            href="/login"
-            className="mx-auto mt-5 block h-[53px] w-[400px] rounded-[8px] bg-[#172B72] text-center text-[16px] font-semibold tracking-[0.05em] leading-[53px] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:opacity-95 active:scale-[0.99]"
-          >
-            Faça seu Login
-          </Link>
-
-          <Link
-            href="/register"
-            className="mx-auto mt-4 block h-[53px] w-[400px] rounded-[8px] bg-[#B8E7EE] text-center text-[16px] font-semibold tracking-[0.05em] leading-[53px] text-[#172B72] ring-1 ring-[#9ad3e3]/60 shadow-[0_10px_24px_rgba(0,0,0,0.08)] hover:opacity-95 active:scale-[0.99]"
-          >
-            Faça seu Cadastro
-          </Link>
-        </div>
+    <main className="relative min-h-dvh bg-white">
+    <Header/>  
+    <Slide/>
+      <section className="mx-auto flex min-h-dvh justify-center">
+        <div className="flex text-5xl text-blue-900 font-bold mt-10"><h2>Indicadores-Chave(KPIs)</h2></div>
+        
       </section>
     </main>
   );

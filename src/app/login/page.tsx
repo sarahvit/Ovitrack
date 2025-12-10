@@ -7,14 +7,64 @@ import Bg from "@/components/guest/background.png";
 import Logo from "@/components/header/logo3.png";
 import GoogleIcon from "@/components/guest/Google.png"; // <-- novo import
 import { FormEvent, useState } from "react";
+import api from "@/app/api"
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [success, setSuccess] = useState("");
+    const [error, setError] = useState("");
+    const [isLoanding, setIsLoanding] = useState(false);
+    const router = useRouter();
 
-    function onSubmit(e: FormEvent) {
+    async function onSubmit(e: FormEvent) {
+
         e.preventDefault();
-        console.log({ email, password });
+        setSuccess("");
+        setError("");
+
+        if (!email.trim()) {
+            setError("Digite seu email!");
+            return;
+        }
+        if (!password.trim()) {
+            setError("Digite sua senha!");
+            return;
+        }
+
+        setIsLoanding(true);
+
+        try {
+            const { data } = await api.post('auth/login', {
+                email,
+                password,
+            });
+
+            const token = data.token || data.access_token;
+
+            if (!token) {
+                setError("Nenhum token retornado!");
+                return;
+            }
+
+            localStorage.setItem("token", token);
+
+            setSuccess("Login realizado com sucesso!")
+
+            setTimeout(() => {
+                router.push("/")
+            }, 800);
+
+
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.detail || err.response?.data?.message || 'Erro ao criar conta. Tente novamente';
+            setError(errorMessage);
+
+        } finally {
+            setIsLoanding(false);
+        }
+
     }
 
     return (
@@ -44,7 +94,18 @@ export default function LoginPage() {
                     <h1 className="text-center text-[28px] font-bold leading-[1.2] tracking-[0.05em] text-[#172B72]">
                         Faça login na sua conta
                     </h1>
+                    {error && (
+                        <div className="mx-auto mb-4 w-[400px] rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                            {error}
+                        </div>
+                    )}
 
+                    {/* Mensagem de sucesso */}
+                    {success && (
+                        <div className="mx-auto mb-4 w-[400px] rounded-lg bg-green-50 p-3 text-sm text-green-600">
+                            {success}
+                        </div>
+                    )}
                     {/* FORM */}
                     <form onSubmit={onSubmit} className="mt-6 space-y-4">
                         {/* E-mail */}
