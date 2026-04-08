@@ -29,7 +29,7 @@ export function GraficoOVos({ data, selectedYear,
         <div>
             <div className="flex flex-row justify-between mb-14">
             <div className="flex items-center">
-                <h3 className="text-3xl text-blue-900 font-bold ">Ovos detectados nos últimos 7 dias</h3>
+                <h3 className="text-3xl text-blue-900 font-bold ">Distribuição semanal de ovos no ano selecionado</h3>
             </div>
             <div className="flex items-center">
                 <select
