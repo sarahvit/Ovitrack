@@ -33,7 +33,7 @@ export default function UsersPage() {
         name: "",
         email: "",
         password: "",
-        role: "visualizador"
+        role: "tecnico"
     });
     async function fetchUsers() {
         try {
@@ -73,7 +73,7 @@ export default function UsersPage() {
                 name: "",
                 email: "",
                 password: "",
-                role: "visualizador"
+                role: "tecnico"
             });
 
         } catch {

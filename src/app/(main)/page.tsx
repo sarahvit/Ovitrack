@@ -19,8 +19,9 @@ import { calculateAllWeekMetrics, calculateWeeklyMetrics } from "@/lib/utils/ent
 
 import { IndicadoresEntomologicos } from "@/components/entomologico";
 import { GraficoOVos } from "@/components/graficoOvos";
-import { getListImages } from "@/lib/api/endpoints/images";
+
 import { GraficoCasos } from "@/components/graficoCasos";
+import { listResults } from "@/lib/api/endpoints/results";
 
 export default function Page() {
   const [year, setYear] = useState<number | null>(null)
@@ -34,6 +35,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false)
   const months = Array.from({ length: maxMonth }, (_, i) => i + 1)
   const weeks = Array.from({ length: maxWeek }, (_, i) => i + 1)
+  const [results, setResults] = useState<any[]>([])
   type GraficoData = {
     semana: string
     ovos: number
@@ -56,18 +58,41 @@ export default function Page() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [availableWeeks, setAvailableWeeks] = useState<string[]>([])
   const [selectedWeek, setSelectedWeek] = useState<string>("")
-  const [metrics, setMetrics] = useState<any>(null)
-  const [images, setImages] = useState<any[]>([])
+  const [metrics, setMetrics] = useState<any>({})
   const [graficoEpi, setGraficoEpi] = useState<GraficoEpi[]>([])
 
 
- 
+  function epiWeekNumberToString(value: number) {
+    const raw = String(value);
+    const year = raw.slice(0, 4);
+    const week = raw.slice(4).padStart(2, "0");
+    return `${year}-${week}`;
+  }
+  useEffect(() => {
+    async function loadResults() {
+      try {
+        const response = await listResults({
+          page: 1,
+          size: 1000,
+          sort: "-capture_date",
+        });
 
+        setResults(response.items ?? []);
+      } catch (error) {
+        console.error("Erro ao carregar resultados:", error);
+        setResults([]);
+      }
+    }
+
+    loadResults();
+  }, [])
   useEffect(() => {
     async function loadYears() {
       try {
         const yearsSet = new Set(
-          images.map(img => Number(img.epidemiological_week.split("-")[0]))
+          results.map(item =>
+            Number(String(item.inspection.epidemiological_week).slice(0, 4))
+          )
         )
         const yearsArray = Array.from(yearsSet).sort((a, b) => a - b)
         setAvailableYears(yearsArray)
@@ -78,7 +103,7 @@ export default function Page() {
     }
 
     loadYears()
-  }, [images])
+  }, [results])
 
   useEffect(() => {
     async function loadWeeks() {
@@ -86,9 +111,13 @@ export default function Page() {
       try {
 
         const weeksSet = new Set(
-          images
-            .filter(img => Number(img.epidemiological_week.split("-")[0]) === selectedYear)
-            .map(img => img.epidemiological_week)
+          results
+            .filter(
+              item =>
+                Number(String(item.inspection.epidemiological_week).slice(0, 4)) ===
+                selectedYear
+            )
+            .map(item => epiWeekNumberToString(item.inspection.epidemiological_week))
         )
         const weeksArray = Array.from(weeksSet).sort()
         setAvailableWeeks(weeksArray)
@@ -103,7 +132,7 @@ export default function Page() {
     }
 
     loadWeeks()
-  }, [selectedYear, images])
+  }, [selectedYear, results])
 
   useEffect(() => {
     async function loadMetrics() {
@@ -185,17 +214,22 @@ export default function Page() {
   }, [])
 
   useEffect(() => {
-    async function loadGrafico() {
-      if (!selectedYear || images.length === 0) return
+  async function loadGrafico() {
+    if (!selectedYear || results.length === 0) return
 
-      const data = await calculateAllWeekMetrics(selectedYear, 52)
+    try {
+      const data = await calculateAllWeekMetrics(selectedYear, maxWeek)
       setGraficoData(data)
       console.log("YEAR:", selectedYear)
       console.log("DATA:", data)
+    } catch (error) {
+      console.error("Erro ao carregar gráfico:", error)
+      setGraficoData([])
     }
-    loadGrafico()
+  }
 
-  }, [selectedYear, maxWeek, images])
+  loadGrafico()
+}, [selectedYear, maxWeek, results])
 
   if (!metrics) return <p>Carregando...</p>
   return (

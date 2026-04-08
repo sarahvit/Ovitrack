@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { Imagem, postImagesUpload } from "@/lib/api/endpoints/images"
+import { Imagem, postImagesUpload } from "@/lib/api/endpoints/inspection"
 
 export default function UploadGaleria() {
     const [imagens, setImagens] = useState<Imagem[]>([])

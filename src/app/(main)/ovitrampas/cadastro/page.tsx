@@ -31,7 +31,7 @@ export default function Page() {
 
     async function fetchData() {
         try {
-            const response = await listOvitrampas();
+            const response = await listOvitrampas({ page: 1, size: 1000 });
             setData(response);
         } catch {
             setError("Erro ao carregar ovitrampas");
@@ -55,15 +55,26 @@ export default function Page() {
         try {
             const ovitrampa = await getOvitrampa(id);
             console.log("Ovitrampa para editar:", ovitrampa);
-            // aqui depois você pode abrir modal ou redirecionar
         } catch {
             alert("Erro ao buscar ovitrampa");
         }
     }
 
-    const filteredData = data.filter((item) =>
-       ( item.id ?? "")
-    );
+    const filteredData = data.filter((item) => {
+        const term = filter.trim().toLowerCase();
+        if (!term) return true;
+
+        const location = item.current_location;
+
+        return (
+            item.code.toLowerCase().includes(term) ||
+            String(item.id).includes(term) ||
+            (location?.neighbourhood ?? "").toLowerCase().includes(term) ||
+            (location?.street_name ?? "").toLowerCase().includes(term) ||
+            (location?.block ?? "").toLowerCase().includes(term) ||
+            (location?.macro_zone ?? "").toLowerCase().includes(term)
+        );
+    });
 
     return (
         <div className={`${poppins.className} p-10 bg-[#F6F8FC] min-h-screen`}>
@@ -74,11 +85,10 @@ export default function Page() {
             </h1>
 
             <div className="bg-white rounded-2xl border shadow-sm p-6">
-                {/* Barra de pesquisa */}
                 <div className="flex items-center gap-3 mb-4 justify-between">
                     <div className="relative w-1/2">
                         <input
-                            placeholder="Filtrar por bairro"
+                            placeholder="Filtrar por bairro, rua ou código"
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
                             className="bg-gray-100 border border-gray-200 px-10 py-2.5 rounded-lg text-black text-sm w-full outline-none"
@@ -93,20 +103,15 @@ export default function Page() {
                     </div>
                 </div>
 
-                {/* Contador */}
                 <p
                     className={`${montserrat.className} text-center text-[#172B72] text-base font-semibold underline tracking-wide mb-4`}
                 >
                     EXIBINDO {filteredData.length} OVITRAMPAS
                 </p>
 
-                {/* Loading */}
                 {loading && <p className="text-center py-6">Carregando...</p>}
-
-                {/* Error */}
                 {error && <p className="text-center text-red-500">{error}</p>}
 
-                {/* Tabela */}
                 {!loading && !error && (
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm border-collapse">
@@ -117,12 +122,8 @@ export default function Page() {
                                     </th>
                                     <th className="py-3 px-4 text-center font-semibold">MAC</th>
                                     <th className="py-3 px-4 text-center font-semibold">QUART</th>
-                                    <th className="py-3 px-4 text-center font-semibold">
-                                        Bairro
-                                    </th>
-                                    <th className="py-3 px-4 text-center font-semibold">
-                                        Endereço
-                                    </th>
+                                    <th className="py-3 px-4 text-center font-semibold">Bairro</th>
+                                    <th className="py-3 px-4 text-center font-semibold">Endereço</th>
                                     <th className="py-3 px-4 text-center font-semibold">
                                         Data de Criação
                                     </th>
@@ -133,61 +134,67 @@ export default function Page() {
                             </thead>
 
                             <tbody>
-                                {filteredData.map((row, index) => (
-                                    <tr
-                                        key={row.id}
-                                        className="border-b border-gray-100 text-center text-gray-700"
-                                    >
-                                        <td className={`py-3 px-4 ${colOdd}`}>
-                                            {row.code}
-                                        </td>
-                                        <td className={`py-3 px-4 ${colEven}`}>
-                                            {row.macro}
-                                        </td>
-                                        <td className={`py-3 px-4 ${colOdd}`}>
-                                            {row.quar}
-                                        </td>
-                                        <td className={`py-3 px-4 ${colEven}`}>
-                                            {row.neighborhood}
-                                        </td>
-                                        <td className={`py-3 px-4 ${colOdd}`}>
-                                            {row.street_name} {row.street_number}
-                                        </td>
-                                        <td className={`py-3 px-4 ${colEven}`}>
-                                            {new Date(row.created_at).toLocaleDateString()}
-                                        </td>
+                                {filteredData.map((row) => {
+                                    const location = row.current_location;
 
-                                        <td className={`py-3 px-4 ${colEven}`}>
-                                            <div className="flex justify-center gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(row.id)}
-                                                    className="p-2 border border-[#CBCBCB] rounded-md hover:bg-gray-100 bg-white"
-                                                >
-                                                    <Image
-                                                        src={caneta}
-                                                        alt="Editar"
-                                                        width={14}
-                                                        height={14}
-                                                    />
-                                                </button>
+                                    return (
+                                        <tr
+                                            key={row.id}
+                                            className="border-b border-gray-100 text-center text-gray-700"
+                                        >
+                                            <td className={`py-3 px-4 ${colOdd}`}>{row.code}</td>
 
-                                                <button
-                                                    onClick={() => handleDelete(row.id)}
-                                                    className="p-2 border border-gray-200 rounded-md text-red-400 hover:bg-red-50 hover:text-red-600 font-bold text-xs bg-white"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            <td className={`py-3 px-4 ${colEven}`}>
+                                                {location?.macro_zone ?? "-"}
+                                            </td>
+
+                                            <td className={`py-3 px-4 ${colOdd}`}>
+                                                {location?.block ?? "-"}
+                                            </td>
+
+                                            <td className={`py-3 px-4 ${colEven}`}>
+                                                {location?.neighbourhood ?? "-"}
+                                            </td>
+
+                                            <td className={`py-3 px-4 ${colOdd}`}>
+                                                {[location?.street_name, location?.street_number]
+                                                    .filter(Boolean)
+                                                    .join(" ") || "-"}
+                                            </td>
+
+                                            <td className={`py-3 px-4 ${colEven}`}>
+                                                {new Date(row.created_at).toLocaleDateString()}
+                                            </td>
+
+                                            <td className={`py-3 px-4 ${colEven}`}>
+                                                <div className="flex justify-center gap-2">
+                                                    <button
+                                                        onClick={() => handleEdit(row.id)}
+                                                        className="p-2 border border-[#CBCBCB] rounded-md hover:bg-gray-100 bg-white"
+                                                    >
+                                                        <Image
+                                                            src={caneta}
+                                                            alt="Editar"
+                                                            width={14}
+                                                            height={14}
+                                                        />
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => handleDelete(row.id)}
+                                                        className="p-2 border border-gray-200 rounded-md text-red-400 hover:bg-red-50 hover:text-red-600 font-bold text-xs bg-white"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
 
                                 {filteredData.length === 0 && (
                                     <tr>
-                                        <td
-                                            colSpan={7}
-                                            className="py-6 text-center text-gray-400"
-                                        >
+                                        <td colSpan={7} className="py-6 text-center text-gray-400">
                                             Nenhuma ovitrampa encontrada
                                         </td>
                                     </tr>
