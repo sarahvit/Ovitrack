@@ -36,7 +36,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <div className="px-4 py-4 border-b border-gray-300">
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-md hover:bg-gray-200 transition">
+                        className="p-2 rounded-md hover:bg-gray-200 transition cursor-pointer">
                         <div className="space-y-1">
                             <Image src={hamburguer} alt="icone para fechar sidebar do gestor" className="h-[30px] w-auto block" />
                         </div>
@@ -56,7 +56,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     <div>
                         <button
                             onClick={() => setExpandedOutrampas(!expandedOutrampas)}
-                            className="w-full flex items-center gap-3 px-5 py-4  border-b  border-gray-300 font-semibold hover:bg-[#DDE3EC]">
+                            className="w-full flex items-center gap-3 px-5 py-4  border-b  border-gray-300 font-semibold hover:bg-[#DDE3EC] cursor-pointer">
                             <span className={`transition-transform ${expandedOutrampas ? "rotate-90" : ""}`}>
                                 <Image src={seta} alt="seta" />
                             </span>
@@ -66,13 +66,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
                         {expandedOutrampas && (
                             <div className="bg-[#DCE3EE] text-[13px]  text-sm">
-                                <div className="flex flex-row items-center hover:bg-[#CCD6E6]">
+                                <div className="flex flex-row items-center hover:bg-[#CCD6E6] cursor-pointer">
                                     <Image src={engrenagem} alt="icone gestão de usuários" className="h-[30px] w-auto block pl-15 " />
                                     <Link className="block pl-2 pr-6 py-3 border-b border-gray-300" href={"/ovitrampas/gerenciamento"}>
                                         Resultados de leituras
                                     </Link>
                                 </div>
-                                <div className="flex flex-row items-center hover:bg-[#CCD6E6]">
+                                <div className="flex flex-row items-center hover:bg-[#CCD6E6] cursor-pointer">
                                     <Image src={check} alt="icone gestão de usuários" className="h-[30px] w-auto block pl-15 " />
                                     <Link className="block pl-2 pr-6 py-3 border-b border-gray-300" href={"/ovitrampas/cadastro"}>
                                         Ovitrampas cadastradas
