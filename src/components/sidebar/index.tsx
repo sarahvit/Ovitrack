@@ -69,7 +69,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                                 <div className="flex flex-row items-center hover:bg-[#CCD6E6]">
                                     <Image src={engrenagem} alt="icone gestão de usuários" className="h-[30px] w-auto block pl-15 " />
                                     <Link className="block pl-2 pr-6 py-3 border-b border-gray-300" href={"/ovitrampas/gerenciamento"}>
-                                        Gerenciamento da leitura de ovos
+                                        Resultados de leituras
                                     </Link>
                                 </div>
                                 <div className="flex flex-row items-center hover:bg-[#CCD6E6]">

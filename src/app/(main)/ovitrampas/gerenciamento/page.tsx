@@ -40,7 +40,7 @@ export default function Page() {
         <div className={`${poppins.className} p-10 bg-[#F6F8FC] min-h-screen`}>
 
             <h1 className={`${montserrat.className} text-4xl font-bold text-[#172B72] text-center mb-8`}>
-                Gerenciar leitura de ovos
+                Resultados de leitura 
             </h1>
 
             <div className="bg-white rounded-2xl border shadow-sm p-6">
