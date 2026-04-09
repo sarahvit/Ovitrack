@@ -7,7 +7,8 @@ import search from "@/app/(main)/ovitrampas/cadastro/search.png";
 import { listResults } from "@/lib/api/endpoints/results";
 import { ResultListItem } from "@/types/result";
 import { buildImageUrl } from "@/lib/utils/image";
-
+import ProtectedNgrokImage from "@/components/results/NgrokBlobImage";
+import NgrokBlobImage from "@/components/results/NgrokBlobImage";
 const montserrat = Montserrat({ subsets: ["latin"], weight: ["600", "700"] });
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
@@ -213,9 +214,7 @@ export default function Page() {
                                         </th>
                                         <th className="py-3 px-4 text-center font-semibold">Status</th>
                                         <th className="py-3 px-4 text-center font-semibold">Ovos</th>
-                                        <th className="py-3 px-4 text-center font-semibold">
-                                            Confiança
-                                        </th>
+                                        
                                         <th className="py-3 px-4 text-center font-semibold rounded-tr-lg">
                                             Ações
                                         </th>
@@ -252,11 +251,7 @@ export default function Page() {
                                                 {row.processing?.egg_count ?? 0}
                                             </td>
 
-                                            <td className={`py-3 px-4 ${colOdd}`}>
-                                                {row.processing?.confidence != null
-                                                    ? `${(row.processing.confidence * 100).toFixed(1)}%`
-                                                    : "-"}
-                                            </td>
+                                            
 
                                             <td className={`py-3 px-4 ${colEven}`}>
                                                 <div className="flex justify-center gap-2">
@@ -292,7 +287,7 @@ export default function Page() {
                                 <button
                                     onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                                     disabled={page === 1}
-                                    className="px-4 py-2 rounded-md border bg-white disabled:opacity-50"
+                                    className="px-4 py-2 rounded-md border bg-white disabled:opacity-50 text-blue-800 cursor-pointer hover:bg-gray-100/80"
                                 >
                                     Anterior
                                 </button>
@@ -300,7 +295,7 @@ export default function Page() {
                                 <button
                                     onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                                     disabled={page >= totalPages}
-                                    className="px-4 py-2 rounded-md border bg-white disabled:opacity-50"
+                                    className="px-4 py-2 rounded-md border bg-white disabled:opacity-50 text-blue-800 cursor-pointer hover:bg-gray-100/80"
                                 >
                                     Próxima
                                 </button>
@@ -359,15 +354,6 @@ export default function Page() {
                                         {selectedRow.processing?.egg_count ?? 0}
                                     </p>
                                 </div>
-
-                                <div className="bg-[#F9FAFC] border rounded-xl p-4">
-                                    <p className="text-gray-500">Confiança</p>
-                                    <p className="font-semibold text-black">
-                                        {selectedRow.processing?.confidence != null
-                                            ? `${(selectedRow.processing.confidence * 100).toFixed(1)}%`
-                                            : "-"}
-                                    </p>
-                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -375,49 +361,24 @@ export default function Page() {
                                     <h3 className="text-lg font-semibold text-[#172B72] mb-4">
                                         Antes
                                     </h3>
-
-                                    {selectedRow.inspection.raw_image_path ? (
-                                        <img
-                                            src={buildImageUrl(selectedRow.inspection.raw_image_path)}
-                                            alt="Imagem original da ovitrampa"
-                                            className="w-full max-h-[420px] object-contain rounded-xl border bg-white"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = "none";
-                                                console.log("raw falhou");
-                                                console.log("raw src:", e.currentTarget.src);
-
-                                            }}
-
-                                        />
-                                    ) : (
-
-                                        <div className="w-full h-[320px] rounded-xl border bg-white flex items-center justify-center text-gray-400">
-                                            Imagem original indisponível
-                                        </div>
-                                    )}
+                                    <NgrokBlobImage
+                                        path={selectedRow.inspection.raw_image_path}
+                                        alt="Imagem original da ovitrampa"
+                                        className="w-full max-h-[420px] object-contain rounded-xl border bg-white text-black"
+                                        fallbackText="Imagem original indisponível"
+                                    />
                                 </div>
 
                                 <div className="border rounded-2xl p-4 bg-[#F9FAFC]">
                                     <h3 className="text-lg font-semibold text-[#172B72] mb-4">
                                         Depois
                                     </h3>
-
-                                    {selectedRow.processing?.processed_image_path ? (
-                                        <img
-                                            src={buildImageUrl(selectedRow.processing.processed_image_path)}
-                                            alt="Imagem processada"
-                                            className="w-full max-h-[420px] object-contain rounded-xl border bg-white"
-                                            onLoad={() => console.log("PROCESSED carregou")}
-                                            onError={(e) => {
-                                                console.log("PROCESSED falhou");
-                                                console.log("PROCESSED src:", e.currentTarget.src);
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-[320px] rounded-xl border bg-white flex items-center justify-center text-gray-400">
-                                            Imagem processada indisponível
-                                        </div>
-                                    )}
+                                    <NgrokBlobImage
+                                        path={selectedRow.processing?.processed_image_path}
+                                        alt="Imagem processada"
+                                        className="w-full max-h-[420px] object-contain bg-white text-black"
+                                        fallbackText="Imagem processada indisponível"
+                                    />
                                 </div>
                             </div>
 

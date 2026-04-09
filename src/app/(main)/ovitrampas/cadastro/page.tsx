@@ -517,7 +517,7 @@ export default function Page() {
                                 <button
                                     onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                                     disabled={page === 1}
-                                    className="px-4 py-2 rounded-md border bg-white disabled:opacity-50 hover:bg-gray-100/70 cursor-pointer"
+                                    className="px-4 py-2 rounded-md border bg-white disabled:opacity-50 hover:bg-gray-100/70 cursor-pointer "
                                 >
                                     Anterior
                                 </button>
