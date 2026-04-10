@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const indicadoresClient = axios.create({
-  baseURL: "http://localhost:8002",
+  baseURL: "/api/indicators",
   headers: {
     "Content-Type": "application/json",
   },
