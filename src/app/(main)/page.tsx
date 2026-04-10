@@ -51,25 +51,25 @@ export default function Page() {
   }
 
   const [graficoData, setGraficoData] = useState<GraficoData[]>([]);
-const years =
-  minYear !== null && maxYear !== null
-    ? Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
-    : [];
+  const years =
+    minYear !== null && maxYear !== null
+      ? Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
+      : [];
 
-const [extraYears, setExtraYears] = useState<number[]>([]);
+  const [extraYears, setExtraYears] = useState<number[]>([]);
 
-useEffect(() => {
-  if (!year) return;
+  useEffect(() => {
+    if (!year) return;
 
-  setExtraYears((prev) => {
-    if (prev.includes(year)) return prev;
-    return [...prev, year].sort((a, b) => a - b);
-  });
-}, [year]);
+    setExtraYears((prev) => {
+      if (prev.includes(year)) return prev;
+      return [...prev, year].sort((a, b) => a - b);
+    });
+  }, [year]);
 
-const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
-  (a, b) => a - b
-);
+  const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
+    (a, b) => a - b
+  );
 
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -77,6 +77,7 @@ const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
   const [selectedWeek, setSelectedWeek] = useState<string>("");
   const [metrics, setMetrics] = useState<any>({});
   const [graficoEpi, setGraficoEpi] = useState<GraficoEpi[]>([]);
+  const [activeSection, setActiveSection] = useState<"epidemiologico" | "entomologico">("epidemiologico");
   function getMaxWeekFromResults(results: any[], selectedYear: number) {
     const weekNumbers = results
       .filter(
@@ -220,22 +221,22 @@ const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
     fetchData();
   }, [year, periodType, periodValue]);
 
- useEffect(() => {
-  async function loadYears() {
-    try {
-      const res = await getAvailableYears();
+  useEffect(() => {
+    async function loadYears() {
+      try {
+        const res = await getAvailableYears();
 
-      setMinYear(res.min_year);
-      setMaxYear(res.max_year);
+        setMinYear(res.min_year);
+        setMaxYear(res.max_year);
 
-      setYear((prev) => prev ?? res.max_year);
-    } catch (error) {
-      console.error("Erro ao carregar anos:", error);
+        setYear((prev) => prev ?? res.max_year);
+      } catch (error) {
+        console.error("Erro ao carregar anos:", error);
+      }
     }
-  }
 
-  loadYears();
-}, []);
+    loadYears();
+  }, []);
 
   useEffect(() => {
     async function loadGrafico() {
@@ -261,129 +262,139 @@ const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
 
     loadGrafico();
   }, [selectedYear, results]);
-useEffect(() => {
-  async function loadGraficoCasos() {
-    if (!year) {
-      setGraficoEpi([]);
-      return;
+  useEffect(() => {
+    async function loadGraficoCasos() {
+      if (!year) {
+        setGraficoEpi([]);
+        return;
+      }
+
+      try {
+        console.log("ANO DO GRAFICO:", year);
+
+        const serie = await getWeeklyCasesByYear(year);
+        console.log("SERIE BRUTA NORMALIZADA:", serie);
+
+        const formatted = serie.map((item) => ({
+          semana: `Semana ${item.week}`,
+          casos: item.confirmed_cases,
+        }));
+
+        console.log("SERIE FORMATADA:", formatted);
+
+        setGraficoEpi(formatted);
+      } catch (error) {
+        console.error("Erro ao carregar gráfico de casos confirmados:", error);
+        setGraficoEpi([]);
+      }
     }
 
-    try {
-      console.log("ANO DO GRAFICO:", year);
-
-      const serie = await getWeeklyCasesByYear(year);
-      console.log("SERIE BRUTA NORMALIZADA:", serie);
-
-      const formatted = serie.map((item) => ({
-        semana: `Semana ${item.week}`,
-        casos: item.confirmed_cases,
-      }));
-
-      console.log("SERIE FORMATADA:", formatted);
-
-      setGraficoEpi(formatted);
-    } catch (error) {
-      console.error("Erro ao carregar gráfico de casos confirmados:", error);
-      setGraficoEpi([]);
-    }
-  }
-
-  loadGraficoCasos();
-}, [year]);
+    loadGraficoCasos();
+  }, [year]);
 
   if (!metrics) return <p>Carregando...</p>;
 
   return (
     <main className="relative min-h-dvh bg-white">
       <Slide />
-
-      <section className="mx-auto flex flex-col">
-        <div className="flex items-center gap-10 mt-20 mb-20 px-20">
-          <h2 className="text-5xl text-blue-900 font-bold mr-30">
-            Indicadores-Chave (KPIs)
-          </h2>
-
-          <select
-            className="text-black text-sm bg-gray-100 w-40 h-10 p-2 rounded border border-gray-300"
-            onChange={(e) => {
-              const type = e.target.value as "year" | "month" | "week";
-              setPeriodType(type);
-              if (type === "month") setPeriodValue(1);
-              if (type === "week") setPeriodValue(1);
-              if (type === "year") setPeriodValue(null);
-            }}
+      <section className="px-20 pt-16">
+        <div className="border-b border-gray-300 flex gap-8">
+          <button
+            type="button"
+            onClick={() => setActiveSection("epidemiologico")}
+            className={`pb-2 text-4xl  cursor-pointer ${activeSection === "epidemiologico"
+              ? "text-gray-700 font-semibold border-b-4 border-[#172B72]"
+              : "text-gray-700 "
+              }`}
           >
-            <option value="year">Ano completo</option>
-            <option value="month">Por mês</option>
-            <option value="week">Por semana</option>
-          </select>
+            Epidemiológico
+          </button>
 
-          <select
-            value={year ?? ""}
-            className="text-black text-sm bg-gray-100 w-70 h-10 p-2 rounded border border-gray-300"
-            onChange={(e) => setYear(Number(e.target.value))}
+          <button
+            type="button"
+            onClick={() => setActiveSection("entomologico")}
+            className={`pb-2 text-4xl  cursor-pointer ${activeSection === "entomologico"
+              ? "text-[#172B72] border-b-4 font-semibold border-[#172B72]"
+              : "text-gray-700"
+              }`}
           >
-            {yearsForSelect.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-
-          {periodType !== "year" && (
-            <select
-              className="text-black bg-gray-100 w-50 text-sm h-10 p-2 rounded border border-gray-300"
-              onChange={(e) => setPeriodValue(Number(e.target.value))}
-            >
-              {periodType === "month" &&
-                months.map((m) => (
-                  <option key={m} value={m}>
-                    Mês {m}
-                  </option>
-                ))}
-
-              {periodType === "week" &&
-                weeks.map((w) => (
-                  <option key={w} value={w}>
-                    Semana {w}
-                  </option>
-                ))}
-            </select>
-          )}
+            Entomológico
+          </button>
         </div>
-
-        <Card indicadores={indicadores} loading={loading} periodType={periodType} />
       </section>
+      {activeSection === "epidemiologico" && (
+        <section className=" flex flex-col">
+          <div className="px-20 mt-6 mb-20">
+            <p className="text-gray-800 text-[20px]">
+              Dados sobre a saúde da população, incluindo o monitoramento de casos notificados, confirmações semanais e a evolução temporal da doença para identificar surtos e fatores de risco.
+            </p>
+          </div>
+          <div className="flex items-center mt-8 mb-20 justify-between">
+            <div className="flex flex-start pl-20">
+              <h2 className="text-5xl text-blue-900 font-bold mr-50">
+                Indicadores-Chave (KPIs)
+              </h2>
+            </div>
+            <div className="mr-20 ">
+              {periodType !== "year" && (
+                <select
+                  className="text-black bg-gray-100 w-30 text-sm h-10 p-2 rounded border border-gray-300 mr-8"
+                  onChange={(e) => setPeriodValue(Number(e.target.value))}
+                >
+                  {periodType === "month" &&
+                    months.map((m) => (
+                      <option key={m} value={m}>
+                        Mês {m}
+                      </option>
+                    ))}
 
-      <section className="mx-auto flex min-h-dvh justify-center">
-        <Mapas />
-      </section>
+                  {periodType === "week" &&
+                    weeks.map((w) => (
+                      <option key={w} value={w}>
+                        Semana {w}
+                      </option>
+                    ))}
+                </select>
+              )}
+              <select
+                value={year ?? ""}
+                className="text-black text-sm bg-gray-100 w-26 h-10 p-2 rounded border border-gray-300 mr-8"
+                onChange={(e) => setYear(Number(e.target.value))}
+              >
+                {yearsForSelect.map((y) => (
+                  <option key={y} value={y}>
+                   Ano {y}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="text-black text-sm bg-gray-100 w-60 h-10 p-2 rounded border border-gray-300"
+                onChange={(e) => {
+                  const type = e.target.value as "year" | "month" | "week";
+                  setPeriodType(type);
+                  if (type === "month") setPeriodValue(1);
+                  if (type === "week") setPeriodValue(1);
+                  if (type === "year") setPeriodValue(null);
+                }}
+              >
+                <option value="year">Ano completo</option>
+                <option value="month">Por mês</option>
+                <option value="week">Por semana</option>
+              </select>
+            </div>
 
-      <section className="mx-auto flex flex-col w-full">
-        <div className="mb-20 px-20">
-          <IndicadoresEntomologicos
-            selectedYear={selectedYear}
-            setSelectedYear={setSelectedYear}
-            availableYears={availableYears}
-            selectedWeek={selectedWeek}
-            setSelectedWeek={setSelectedWeek}
-            availableWeeks={availableWeeks}
-            metrics={metrics}
-            loading={loading}
-          />
 
-          <div className="flex flex-col">
-            <h2 className="flex item text-5xl text-blue-900 font-bold mt-10 mb-20">
-              Evolução temporal
-            </h2>
 
-            <GraficoOVos
-              data={graficoData}
-              selectedYear={selectedYear}
-              setSelectedYear={setSelectedYear}
-              availableYears={availableYears}
-            />
+          </div>
 
+          <Card indicadores={indicadores} loading={loading} periodType={periodType} />
+
+          <div className="flex flex-col mt-30 px-20 mb-40 gap-10">
+            <div className="border-t border-gray-300 flex">
+              <h2 className="flex item text-5xl text-blue-900 font-bold mt-10">
+                Evolução temporal
+              </h2>
+            </div>
             <div className="w-full h-[350px]">
               <GraficoCasos
                 data={graficoEpi}
@@ -393,8 +404,54 @@ useEffect(() => {
               />
             </div>
           </div>
+        </section>
+      )}
+      {activeSection === "entomologico" && (
+        <div>
+          <div className="px-20 mt-6 mb-8">
+            <p className="text-gray-700  text-[20px]">
+              Análise focada no vetor, apresentando a distribuição espacial e a
+              densidade de ovos do mosquito através de mapas de calor e dados de
+              ovitrampas.
+            </p>
+          </div>
+         
+
+          <section className="mx-auto flex flex-col w-full">
+            <div className="mb-20 px-20">
+              <IndicadoresEntomologicos
+                selectedYear={selectedYear}
+                setSelectedYear={setSelectedYear}
+                availableYears={availableYears}
+                selectedWeek={selectedWeek}
+                setSelectedWeek={setSelectedWeek}
+                availableWeeks={availableWeeks}
+                metrics={metrics}
+                loading={loading}
+              />
+
+              <div className="flex flex-col">
+                <h2 className="flex item text-5xl text-blue-900 font-bold mt-10 mb-20">
+                  Evolução temporal
+                </h2>
+
+                <GraficoOVos
+                  data={graficoData}
+                  selectedYear={selectedYear}
+                  setSelectedYear={setSelectedYear}
+                  availableYears={availableYears}
+                />
+
+
+              </div>
+            </div>
+
+          </section>
+           <section className="mx-auto flex min-h-dvh justify-center">
+            <Mapas />
+          </section>
         </div>
-      </section>
+      )}
 
       <Footer />
     </main>

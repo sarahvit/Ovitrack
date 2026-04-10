@@ -28,9 +28,9 @@ export function GraficoCasos({
 }: Props) {
     return (
         <div>
-            <div className="flex flex-row justify-between mb-14">
+            <div className="flex flex-row justify-between mb-10">
                 <div className="flex items-center">
-                    <h3 className="text-3xl text-blue-900 font-bold">
+                    <h3 className="text-3xl text-blue-900 font-semibold">
                         Casos confirmados no ano
                     </h3>
                 </div>

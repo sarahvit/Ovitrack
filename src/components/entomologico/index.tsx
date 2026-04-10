@@ -26,7 +26,10 @@ export function IndicadoresEntomologicos({
     return (
         <div className=" text-black">
 
-            <div className="flex gap-4 mb-6 justify-end mb-20">
+            <div >
+                <div className="flex flex-row justify-between">
+                <h3 className=" text-3xl text-blue-900 font-semibold">Distribuição de infestação</h3>
+                <div>
                 <select
                     className="text-black bg-gray-100 w-40 h-10 p-2 rounded border border-gray-300"
                     value={selectedYear ?? ""}
@@ -47,8 +50,11 @@ export function IndicadoresEntomologicos({
                         </option>
                     ))}
                 </select>
+                </div>
+                </div>
+                <GraficoDistribuicao distribution={metrics?.distribution ?? []} selectedWeek={selectedWeek} />
+                
             </div>
-
             <div className="flex items-top justify-between gap-10  mb-16">
                 <div className="  rounded-xl pb-5 pt-5 px-15 border border-blue-800  flex flex-col items-center text-center  ">
                     <p>Ovitrampas ativas: {metrics?.activeOvitraps ?? 0}</p>
@@ -62,10 +68,6 @@ export function IndicadoresEntomologicos({
                 <div className="rounded-xl pb-5 pt-5 px-15 border border-blue-800  flex flex-col items-center text-center ">
                     <p>Média de ovos: {(metrics?.mediaEggs ?? 0).toFixed(2)}</p>
                 </div>
-            </div>
-            <div>
-                <h3 className=" text-3xl text-blue-900 font-semibold">Distribuição de infestação</h3>
-                <GraficoDistribuicao distribution={metrics?.distribution ?? []} selectedWeek={selectedWeek} />
             </div>
 
             {loading && <p className="mt-2 text-gray-500">Atualizando métricas...</p>}
