@@ -37,6 +37,28 @@ export interface OvitrapUpdatePayload {
     is_active?: boolean;
 }
 
+export interface OvitrapRelocatePayload {
+    location: LocationInput;
+    start_date: string;
+}
+
+export interface OvitrapLocationHistoryItem {
+    id: number;
+    ovitrap_id: number;
+    location_id: number;
+    start_date: string;
+    end_date: string | null;
+    created_at: string;
+    location: LocationRead;
+}
+
+export interface OvitrapListResponse {
+    items: Ovitrap[];
+    page: number;
+    size: number;
+    total: number;
+}
+
 export interface Process {
     id: number;
     inspection_id: number;
@@ -51,6 +73,32 @@ export async function processResults(): Promise<Process[]> {
     return data.items ?? data;
 }
 
+export async function listOvitrampasPaged(params?: {
+    page?: number;
+    size?: number;
+    sort?: string;
+    code?: string;
+    is_active?: boolean;
+}): Promise<OvitrapListResponse> {
+    const { data } = await apiClient.get("/ovitraps/", { params });
+
+    if (Array.isArray(data)) {
+        return {
+            items: data,
+            page: params?.page ?? 1,
+            size: params?.size ?? data.length,
+            total: data.length,
+        };
+    }
+
+    return {
+        items: data.items ?? [],
+        page: data.page ?? params?.page ?? 1,
+        size: data.size ?? params?.size ?? 20,
+        total: data.total ?? 0,
+    };
+}
+
 export async function listOvitrampas(params?: {
     page?: number;
     size?: number;
@@ -58,8 +106,8 @@ export async function listOvitrampas(params?: {
     code?: string;
     is_active?: boolean;
 }): Promise<Ovitrap[]> {
-    const { data } = await apiClient.get("/ovitraps/", { params });
-    return data.items ?? data;
+    const data = await listOvitrampasPaged(params);
+    return data.items;
 }
 
 export async function getOvitrampa(id: number): Promise<Ovitrap> {
@@ -80,6 +128,21 @@ export async function updateOvitrampa(
 ): Promise<Ovitrap> {
     const { data } = await apiClient.patch(`/ovitraps/${id}`, payload);
     return data;
+}
+
+export async function relocateOvitrampa(
+    id: number,
+    payload: OvitrapRelocatePayload
+): Promise<OvitrapLocationHistoryItem> {
+    const { data } = await apiClient.post(`/ovitraps/${id}/locations`, payload);
+    return data;
+}
+
+export async function listOvitrampaLocationHistory(
+    id: number
+): Promise<OvitrapLocationHistoryItem[]> {
+    const { data } = await apiClient.get(`/ovitraps/${id}/locations`);
+    return data ?? [];
 }
 
 export async function deleteOvitrampa(id: number) {

@@ -10,6 +10,7 @@ import hamburguer from "./hamburguer.png";
 import logo from "./logo.png";
 import bolaVermelha from "./bola_vermelha.png";
 import sairIcon from "@/components/header/sair.png";
+import Link from "next/link";
 
 type DropdownView = "menu" | "logout";
 
@@ -88,18 +89,24 @@ export function Header({
         {showHamburger && (
           <button
             onClick={onToggleSidebar}
-            className="mr-4 text-white"
+            className="mr-4 text-white cursor-pointer"
             aria-label="Abrir menu"
           >
             <Image
               src={hamburguer}
-              alt="Ícone para abrir a sidebar"
+              alt="Ícone para abrir a sidebar "
               className="block h-[30px] w-auto"
             />
           </button>
         )}
 
-        <Image src={logo} alt="Logo Ovitrack" className="h-[70px] w-auto" />
+        <Link href="/" className="inline-block">
+          <Image
+            src={logo}
+            alt="Logo Ovitrack"
+            className="h-[70px] w-auto cursor-pointer"
+          />
+        </Link>
       </div>
 
       <div className="relative" ref={menuRef}>
@@ -108,7 +115,7 @@ export function Header({
           aria-expanded={menuOpen}
           aria-haspopup="menu"
           aria-label="Abrir menu do usuário"
-          className="rounded-full p-2 text-white hover:bg-white/10"
+          className="rounded-full p-2 text-white hover:bg-white/10 cursor-pointer"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="50" height="35" fill="currentColor" viewBox="0 0 16 16">
             <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
@@ -120,7 +127,7 @@ export function Header({
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 z-50 mt-4 w-[289px] rounded-2xl bg-white shadow-[0_24px_80px_rgba(0,0,0,0.20)]">
+          <div className="cursor-pointer absolute right-0 z-50 mt-4 w-[289px] rounded-2xl bg-white shadow-[0_24px_80px_rgba(0,0,0,0.20)]">
             {!user && (
               <div className="flex flex-col gap-4 p-6">
                 <div className="rounded-xl border border-gray-300 px-4 py-3">
@@ -146,36 +153,38 @@ export function Header({
                   <p className="truncate text-sm text-gray-600">{user.role}</p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={goToConfig}
-                  className="group flex h-11 w-[248px] items-center justify-center gap-2 rounded-lg border border-gray-300 transition-colors hover:bg-gray-100"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                    className="text-gray-700 transition-transform duration-300 ease-in-out group-hover:rotate-90"
+                {user?.role === "gestor" && (
+                  <button
+                    type="button"
+                    onClick={goToConfig}
+                    className="group cursor-pointer flex h-11 w-[248px] items-center justify-center gap-2 rounded-lg border border-gray-300 transition-colors hover:bg-gray-100"
                   >
-                    <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                      className="text-gray-700 transition-transform duration-300 ease-in-out group-hover:rotate-90"
+                    >
+                      <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
 
-                  <span className="text-base font-semibold leading-6 text-gray-700">
-                    Configurações
-                  </span>
-                </button>
+                    <span className="text-base font-semibold leading-6 text-gray-700">
+                      Editar perfil
+                    </span>
+                  </button>
+                )}
 
                 <button
                   onClick={openLogoutConfirm}
-                  className="h-11 w-[248px] rounded-lg border border-red-100 font-semibold text-red-600 transition-all duration-200 hover:bg-red-50 hover:text-red-700 active:scale-95 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
+                  className="cursor-pointer h-11 w-[248px] rounded-lg border border-red-100 font-semibold text-red-600 transition-all duration-200 hover:bg-red-50 hover:text-red-700 active:scale-95 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
                 >
                   Sair
                 </button>
@@ -202,7 +211,7 @@ export function Header({
                 <button
                   type="button"
                   onClick={confirmLogout}
-                  className="absolute left-23 top-42 w-28 rounded-lg px-4 py-2 text-[18px] font-semibold text-red-600 transition-all duration-200 hover:bg-red-50 hover:text-red-700 active:scale-95 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
+                  className="cursor-pointer absolute left-23 top-42 w-28 rounded-lg px-4 py-2 text-[18px] font-semibold text-red-600 transition-all duration-200 hover:bg-red-50 hover:text-red-700 active:scale-95 active:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
                 >
                   Sair
                 </button>
@@ -210,7 +219,7 @@ export function Header({
                 <button
                   type="button"
                   onClick={cancelLogout}
-                  className="absolute left-[92px] top-[216px] rounded-lg px-4 py-2 text-[18px] font-semibold text-gray-800 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  className="cursor-pointer absolute left-[92px] top-[216px] rounded-lg px-4 py-2 text-[18px] font-semibold text-gray-800 transition-all duration-200 hover:bg-gray-100 active:scale-95 active:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
                 >
                   Cancelar
                 </button>

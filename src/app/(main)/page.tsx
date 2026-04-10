@@ -24,7 +24,7 @@ import { IndicadoresEntomologicos } from "@/components/entomologico";
 import { GraficoOVos } from "@/components/graficoOvos";
 import { GraficoCasos } from "@/components/graficoCasos";
 import { listResults } from "@/lib/api/endpoints/results";
-
+import { getWeeklyCasesByYear } from "@/lib/api/endpoints/indicators";
 export default function Page() {
   const [year, setYear] = useState<number | null>(null);
   const [periodType, setPeriodType] = useState<"year" | "month" | "week">("year");
@@ -46,16 +46,30 @@ export default function Page() {
   };
 
   type GraficoEpi = {
-    label: string;
-    confirmados: number;
-    notificados: number;
-  };
+    semana: string
+    casos: number
+  }
 
   const [graficoData, setGraficoData] = useState<GraficoData[]>([]);
-  const years =
-    minYear !== null && maxYear !== null
-      ? Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
-      : [];
+const years =
+  minYear !== null && maxYear !== null
+    ? Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
+    : [];
+
+const [extraYears, setExtraYears] = useState<number[]>([]);
+
+useEffect(() => {
+  if (!year) return;
+
+  setExtraYears((prev) => {
+    if (prev.includes(year)) return prev;
+    return [...prev, year].sort((a, b) => a - b);
+  });
+}, [year]);
+
+const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
+  (a, b) => a - b
+);
 
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -77,6 +91,7 @@ export default function Page() {
 
     return weekNumbers.length > 0 ? Math.max(...weekNumbers) : 52;
   }
+
   useEffect(() => {
     async function loadResults() {
       try {
@@ -205,58 +220,76 @@ export default function Page() {
     fetchData();
   }, [year, periodType, periodValue]);
 
+ useEffect(() => {
+  async function loadYears() {
+    try {
+      const res = await getAvailableYears();
+
+      setMinYear(res.min_year);
+      setMaxYear(res.max_year);
+
+      setYear((prev) => prev ?? res.max_year);
+    } catch (error) {
+      console.error("Erro ao carregar anos:", error);
+    }
+  }
+
+  loadYears();
+}, []);
+
   useEffect(() => {
-    async function loadYears() {
+    async function loadGrafico() {
+      if (!selectedYear || results.length === 0) {
+        setGraficoData([]);
+        return;
+      }
+
       try {
-        const res = await getAvailableYears();
+        const maxWeekFromResults = getMaxWeekFromResults(results, selectedYear);
+        const data = await calculateAllWeekMetrics(
+          results,
+          selectedYear,
+          maxWeekFromResults
+        );
 
-        if (!res || res.max_year == null) {
-          console.error("Resposta inválida da API:", res);
-          return;
-        }
-
-        setMinYear(res.min_year);
-        setMaxYear(res.max_year);
-        setYear((prev) => {
-          if (!prev) return res.max_year;
-          return Math.max(prev, res.max_year);
-        });
+        setGraficoData(data);
       } catch (error) {
-        console.error("Erro ao carregar anos:", error);
+        console.error("Erro ao carregar gráfico:", error);
+        setGraficoData([]);
       }
     }
 
-    loadYears();
-  }, []);
-
- useEffect(() => {
-  async function loadGrafico() {
-    if (!selectedYear || results.length === 0) {
-      setGraficoData([]);
+    loadGrafico();
+  }, [selectedYear, results]);
+useEffect(() => {
+  async function loadGraficoCasos() {
+    if (!year) {
+      setGraficoEpi([]);
       return;
     }
 
     try {
-      const maxWeekFromResults = getMaxWeekFromResults(results, selectedYear);
-      const data = await calculateAllWeekMetrics(
-        results,
-        selectedYear,
-        maxWeekFromResults
-      );
+      console.log("ANO DO GRAFICO:", year);
 
-      console.log("selectedYear:", selectedYear);
-      console.log("maxWeekFromResults:", maxWeekFromResults);
-      console.log("graficoData:", data);
+      const serie = await getWeeklyCasesByYear(year);
+      console.log("SERIE BRUTA NORMALIZADA:", serie);
 
-      setGraficoData(data);
+      const formatted = serie.map((item) => ({
+        semana: `Semana ${item.week}`,
+        casos: item.confirmed_cases,
+      }));
+
+      console.log("SERIE FORMATADA:", formatted);
+
+      setGraficoEpi(formatted);
     } catch (error) {
-      console.error("Erro ao carregar gráfico:", error);
-      setGraficoData([]);
+      console.error("Erro ao carregar gráfico de casos confirmados:", error);
+      setGraficoEpi([]);
     }
   }
 
-  loadGrafico();
-}, [selectedYear, results]);
+  loadGraficoCasos();
+}, [year]);
 
   if (!metrics) return <p>Carregando...</p>;
 
@@ -290,7 +323,7 @@ export default function Page() {
             className="text-black text-sm bg-gray-100 w-70 h-10 p-2 rounded border border-gray-300"
             onChange={(e) => setYear(Number(e.target.value))}
           >
-            {years.map((y) => (
+            {yearsForSelect.map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
@@ -351,12 +384,13 @@ export default function Page() {
               availableYears={availableYears}
             />
 
-            <h3 className="text-3xl text-blue-900 font-bold mb-10">
-              Casos confirmados por ano
-            </h3>
-
             <div className="w-full h-[350px]">
-              <GraficoCasos data={graficoEpi} />
+              <GraficoCasos
+                data={graficoEpi}
+                selectedYear={year}
+                setSelectedYear={setYear}
+                availableYears={yearsForSelect}
+              />
             </div>
           </div>
         </div>

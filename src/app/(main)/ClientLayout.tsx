@@ -30,9 +30,10 @@ export default function ClientLayout({
     "/inspections",
     "/results",
     "/process-results",
+    "/configuracoes",
   ];
 
-  const gestorOnlyRoutes = ["/users"];
+  const gestorOnlyRoutes = ["/users", "/configuracoes"];
 
   useEffect(() => {
     async function checkUser() {

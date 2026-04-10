@@ -54,16 +54,13 @@ export function IndicadoresEntomologicos({
                     <p>Ovitrampas ativas: {metrics?.activeOvitraps ?? 0}</p>
                 </div>
                 <div className="rounded-xl pb-5 pt-5 px-15 border border-blue-800  flex flex-col items-center text-center ">
-                    <p>Armadilhas com coleta: {metrics?.trapsWithCollection ?? 0}</p>
+                    <p>Ovitrampas com coleta: {metrics?.trapsWithCollection ?? 0}</p>
                 </div>
                 <div className="rounded-xl pb-5 pt-5 px-15 border border-blue-800  flex flex-col items-center text-center ">
                     <p>Total de ovos: {metrics?.totalEggs ?? 0}</p>
                 </div>
                 <div className="rounded-xl pb-5 pt-5 px-15 border border-blue-800  flex flex-col items-center text-center ">
                     <p>Média de ovos: {(metrics?.mediaEggs ?? 0).toFixed(2)}</p>
-                </div>
-                <div className="rounded-xl pb-5 pt-5 px-15 border border-blue-800  flex flex-col items-center text-center ">
-                    <p>Percentual positivo: {(metrics?.percentPositive ?? 0).toFixed(1)}%</p>
                 </div>
             </div>
             <div>

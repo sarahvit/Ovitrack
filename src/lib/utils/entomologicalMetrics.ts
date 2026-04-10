@@ -54,12 +54,7 @@ export async function calculateWeeklyMetrics(
 
   const mediaEggs = activeOvitraps > 0 ? totalEggs / activeOvitraps : 0;
 
-  const positives = weekResults.filter(
-    (item) => Number(item.processing?.egg_count ?? 0) > 0
-  ).length;
-
-  const percentPositive =
-    activeOvitraps > 0 ? (positives / activeOvitraps) * 100 : 0;
+ 
 
   const distribution = {
     zero: 0,
@@ -92,7 +87,6 @@ export async function calculateWeeklyMetrics(
     trapsWithCollection,
     totalEggs,
     mediaEggs,
-    percentPositive,
     distribution,
     heatmap,
   };
@@ -135,6 +129,6 @@ export async function calculateAllWeekMetrics(
   return data.map((item) => ({
     semana: item.semana,
     ovos:
-      totalEggs > 0 ? Number(((item.ovos / totalEggs) * 100).toFixed(2)) : 0,
+      item.ovos,
   }));
 }
