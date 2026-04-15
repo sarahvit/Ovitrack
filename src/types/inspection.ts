@@ -15,7 +15,6 @@ export type InspectionLocation = {
     street_number: string | null;
     macro_zone: string | null;
     micro_zone: string | null;
-    zone: string | null;
     created_at: string;
 };
 

@@ -1,192 +1,275 @@
 "use client";
 
-import { Slide } from "@/components/slide/index";
+import { useEffect, useMemo, useState } from "react";
 import { Footer } from "@/components/footer/index";
+import { Slide } from "@/components/slide/index";
 import { Mapas } from "@/components/mapas/index";
-import { useEffect, useState } from "react";
 import { Card } from "@/components/epidemiologico/index";
-import {
-  getTimeFilters,
-  getIndicadoresAno,
-  getIndicadoresMensais,
-  getIndicadoresSemanais,
-  IndicadoresEpi,
-  getAvailableYears,
-} from "@/lib/api/endpoints/indicators";
-
-import {
-  calculateAllWeekMetrics,
-  calculateWeeklyMetrics,
-  epiWeekNumberToString,
-} from "@/lib/utils/entomologicalMetrics";
-
 import { IndicadoresEntomologicos } from "@/components/entomologico";
 import { GraficoOVos } from "@/components/graficoOvos";
 import { GraficoCasos } from "@/components/graficoCasos";
-import { listResults } from "@/lib/api/endpoints/results";
-import { getWeeklyCasesByYear } from "@/lib/api/endpoints/indicators";
+import {
+  getAvailableYears,
+  getIndicadoresAno,
+  getIndicadoresMensais,
+  getIndicadoresSemanais,
+  getTimeFilters,
+  getWeeklyCasesByYear,
+  IndicadoresEpi,
+} from "@/lib/api/endpoints/indicators";
+import {
+  getPublicDashboard,
+  getPublicResultFilters,
+} from "@/lib/api/endpoints/results";
+import {
+  PublicResultDistributionItem,
+  PublicResultWeekOption,
+} from "@/types/result";
+
+type GraficoData = {
+  semana: string;
+  ovos: number;
+};
+
+type GraficoEpi = {
+  semana: string;
+  casos: number;
+};
+
+type DistributionState = {
+  zero: number;
+  range1_20: number;
+  range21_50: number;
+  range51_100: number;
+  over100: number;
+};
+
+type MetricsState = {
+  activeOvitraps: number;
+  trapsWithCollection: number;
+  totalEggs: number;
+  mediaEggs: number;
+  distribution: DistributionState;
+};
+
+const EMPTY_DISTRIBUTION: DistributionState = {
+  zero: 0,
+  range1_20: 0,
+  range21_50: 0,
+  range51_100: 0,
+  over100: 0,
+};
+
+const EMPTY_METRICS: MetricsState = {
+  activeOvitraps: 0,
+  trapsWithCollection: 0,
+  totalEggs: 0,
+  mediaEggs: 0,
+  distribution: EMPTY_DISTRIBUTION,
+};
+
+function epidemiologicalWeekToString(value: number) {
+  const raw = String(value);
+  const year = raw.slice(0, 4);
+  const week = raw.slice(4).padStart(2, "0");
+  return `${year}-${week}`;
+}
+
+function distributionArrayToObject(
+  distribution: PublicResultDistributionItem[]
+): DistributionState {
+  const next: DistributionState = { ...EMPTY_DISTRIBUTION };
+
+  for (const item of distribution) {
+    if (item.label === "0 ovos") next.zero = item.count;
+    if (item.label === "1–20") next.range1_20 = item.count;
+    if (item.label === "21–50") next.range21_50 = item.count;
+    if (item.label === "51–100") next.range51_100 = item.count;
+    if (item.label === "100+") next.over100 = item.count;
+  }
+
+  return next;
+}
+
 export default function Page() {
   const [year, setYear] = useState<number | null>(null);
   const [periodType, setPeriodType] = useState<"year" | "month" | "week">("year");
   const [periodValue, setPeriodValue] = useState<number | null>(null);
   const [minYear, setMinYear] = useState<number | null>(null);
   const [maxYear, setMaxYear] = useState<number | null>(null);
-  const [maxMonth, setMaxMonth] = useState(52);
+  const [maxMonth, setMaxMonth] = useState(12);
   const [maxWeek, setMaxWeek] = useState(52);
   const [indicadores, setIndicadores] = useState<IndicadoresEpi | null>(null);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
+
+  const [publicYears, setPublicYears] = useState<number[]>([]);
+  const [publicWeeks, setPublicWeeks] = useState<PublicResultWeekOption[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [selectedWeek, setSelectedWeek] = useState<string>("");
+  const [metrics, setMetrics] = useState<MetricsState>(EMPTY_METRICS);
+  const [graficoData, setGraficoData] = useState<GraficoData[]>([]);
+  const [graficoEpi, setGraficoEpi] = useState<GraficoEpi[]>([]);
 
   const months = Array.from({ length: maxMonth }, (_, i) => i + 1);
   const weeks = Array.from({ length: maxWeek }, (_, i) => i + 1);
 
-  type GraficoData = {
-    semana: string;
-    ovos: number;
-  };
+  const years =
+    minYear !== null && maxYear !== null
+      ? Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
+      : [];
 
-  type GraficoEpi = {
-    semana: string
-    casos: number
-  }
+  const yearsForSelect = Array.from(new Set([...years, ...publicYears])).sort(
+    (a, b) => a - b
+  );
 
-  const [graficoData, setGraficoData] = useState<GraficoData[]>([]);
-const years =
-  minYear !== null && maxYear !== null
-    ? Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
-    : [];
-
-const [extraYears, setExtraYears] = useState<number[]>([]);
-
-useEffect(() => {
-  if (!year) return;
-
-  setExtraYears((prev) => {
-    if (prev.includes(year)) return prev;
-    return [...prev, year].sort((a, b) => a - b);
-  });
-}, [year]);
-
-const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
-  (a, b) => a - b
-);
-
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [availableWeeks, setAvailableWeeks] = useState<string[]>([]);
-  const [selectedWeek, setSelectedWeek] = useState<string>("");
-  const [metrics, setMetrics] = useState<any>({});
-  const [graficoEpi, setGraficoEpi] = useState<GraficoEpi[]>([]);
-  function getMaxWeekFromResults(results: any[], selectedYear: number) {
-    const weekNumbers = results
-      .filter(
-        (item) =>
-          Number(String(item.inspection?.epidemiological_week ?? "").slice(0, 4)) ===
-          selectedYear
-      )
-      .map((item) =>
-        Number(String(item.inspection?.epidemiological_week ?? "").slice(4))
-      )
-      .filter((value) => !Number.isNaN(value) && value > 0);
-
-    return weekNumbers.length > 0 ? Math.max(...weekNumbers) : 52;
-  }
+  const availableWeeks = useMemo(() => {
+    if (!selectedYear) return [];
+    return publicWeeks
+      .filter((item) => Math.floor(item.value / 100) === selectedYear)
+      .map((item) => epidemiologicalWeekToString(item.value))
+      .sort();
+  }, [publicWeeks, selectedYear]);
 
   useEffect(() => {
-    async function loadResults() {
+    async function loadPublicFilters() {
       try {
-        const response = await listResults({
-          page: 1,
-          size: 1000,
-          sort: "-capture_date",
-        });
+        const response = await getPublicResultFilters();
+        const nextYears = response.years ?? [];
+        const nextWeeks = response.weeks ?? [];
 
-        setResults(response.items ?? []);
+        setPublicYears(nextYears);
+        setPublicWeeks(nextWeeks);
+
+        if (nextYears.length > 0) {
+          setSelectedYear((prev) =>
+            prev && nextYears.includes(prev) ? prev : nextYears[0]
+          );
+        }
       } catch (error) {
-        console.error("Erro ao carregar resultados:", error);
-        setResults([]);
+        console.error("Erro ao carregar filtros públicos:", error);
+        setPublicYears([]);
+        setPublicWeeks([]);
       }
     }
 
-    loadResults();
+    loadPublicFilters();
   }, []);
 
   useEffect(() => {
-    try {
-      const yearsSet = new Set(
-        results
-          .map((item) =>
-            Number(String(item.inspection?.epidemiological_week ?? "").slice(0, 4))
-          )
-          .filter((value) => !Number.isNaN(value) && value > 0)
-      );
-
-      const yearsArray = Array.from(yearsSet).sort((a, b) => a - b);
-      setAvailableYears(yearsArray);
-
-      if (yearsArray.length > 0) {
-        setSelectedYear((prev) => {
-          if (prev && yearsArray.includes(prev)) return prev;
-          return yearsArray[yearsArray.length - 1];
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao carregar anos:", error);
+    if (!selectedYear) {
+      setSelectedWeek("");
+      return;
     }
-  }, [results]);
+
+    const yearWeeks = publicWeeks
+      .filter((item) => Math.floor(item.value / 100) === selectedYear)
+      .map((item) => epidemiologicalWeekToString(item.value))
+      .sort();
+
+    if (yearWeeks.length === 0) {
+      setSelectedWeek("");
+      return;
+    }
+
+    setSelectedWeek((prev) => (prev && yearWeeks.includes(prev) ? prev : yearWeeks[yearWeeks.length - 1]));
+  }, [publicWeeks, selectedYear]);
 
   useEffect(() => {
-    if (!selectedYear) return;
-
-    try {
-      const weeksSet = new Set(
-        results
-          .filter(
-            (item) =>
-              Number(String(item.inspection?.epidemiological_week ?? "").slice(0, 4)) ===
-              selectedYear
-          )
-          .map((item) => epiWeekNumberToString(item.inspection.epidemiological_week))
-      );
-
-      const weeksArray = Array.from(weeksSet).sort();
-      setAvailableWeeks(weeksArray);
-
-      if (weeksArray.length > 0) {
-        setSelectedWeek((prev) => {
-          if (prev && weeksArray.includes(prev)) return prev;
-          return weeksArray[weeksArray.length - 1];
-        });
-      } else {
-        setSelectedWeek("");
-      }
-    } catch (error) {
-      console.error("Erro ao carregar semanas:", error);
-    }
-  }, [selectedYear, results]);
-
-  useEffect(() => {
-    async function loadMetrics() {
-      if (!selectedWeek || results.length === 0) {
-        setMetrics({});
+    async function loadPublicMetrics() {
+      if (!selectedYear) {
+        setMetrics(EMPTY_METRICS);
         return;
       }
 
       try {
-        const data = await calculateWeeklyMetrics(results, selectedWeek);
-        setMetrics(data);
+        const epidemiologicalWeek = selectedWeek
+          ? Number(selectedWeek.replace("-", ""))
+          : undefined;
+
+        const response = await getPublicDashboard({
+          year: selectedYear,
+          ...(epidemiologicalWeek ? { epidemiological_week: epidemiologicalWeek } : {}),
+        });
+
+        setMetrics({
+          activeOvitraps: response.active_ovitraps,
+          trapsWithCollection: response.ovitraps_with_collection,
+          totalEggs: response.total_eggs,
+          mediaEggs: response.average_eggs,
+          distribution: distributionArrayToObject(response.distribution ?? []),
+        });
       } catch (error) {
-        console.error("Erro ao calcular métricas:", error);
-        setMetrics({});
+        console.error("Erro ao carregar métricas entomológicas:", error);
+        setMetrics(EMPTY_METRICS);
       }
     }
 
-    loadMetrics();
-  }, [selectedWeek, results]);
+    loadPublicMetrics();
+  }, [selectedYear, selectedWeek]);
 
   useEffect(() => {
-    async function fetchData() {
+    async function loadEggChart() {
+      if (!selectedYear) {
+        setGraficoData([]);
+        return;
+      }
+
+      const selectedYearWeeks = publicWeeks
+        .filter((item) => Math.floor(item.value / 100) === selectedYear)
+        .sort((a, b) => a.value - b.value);
+
+      if (selectedYearWeeks.length === 0) {
+        setGraficoData([]);
+        return;
+      }
+
+      try {
+        const series = await Promise.all(
+          selectedYearWeeks.map(async (week) => {
+            const dashboard = await getPublicDashboard({
+              year: selectedYear,
+              epidemiological_week: week.value,
+            });
+
+            const weekNumber = String(week.value).slice(4).padStart(2, "0");
+
+            return {
+              semana: `Semana ${Number(weekNumber)}`,
+              ovos: dashboard.total_eggs ?? 0,
+            };
+          })
+        );
+
+        setGraficoData(series);
+      } catch (error) {
+        console.error("Erro ao carregar gráfico de ovos:", error);
+        setGraficoData([]);
+      }
+    }
+
+    loadEggChart();
+  }, [publicWeeks, selectedYear]);
+
+  useEffect(() => {
+    async function loadYears() {
+      try {
+        const res = await getAvailableYears();
+
+        setMinYear(res.min_year);
+        setMaxYear(res.max_year);
+        setYear((prev) => prev ?? res.max_year);
+      } catch (error) {
+        console.error("Erro ao carregar anos:", error);
+      }
+    }
+
+    loadYears();
+  }, []);
+
+  useEffect(() => {
+    async function fetchIndicators() {
       if (!year) return;
+
       setLoading(true);
 
       try {
@@ -200,7 +283,7 @@ const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
           data = await getIndicadoresAno(year);
         } else if (periodType === "month" && periodValue != null) {
           data = await getIndicadoresMensais(year, periodValue);
-        } else if (periodType === "week" && periodValue !== null) {
+        } else if (periodType === "week" && periodValue != null) {
           data = await getIndicadoresSemanais(year, periodValue);
         }
 
@@ -217,187 +300,143 @@ const yearsForSelect = Array.from(new Set([...years, ...extraYears])).sort(
       }
     }
 
-    fetchData();
+    fetchIndicators();
   }, [year, periodType, periodValue]);
 
- useEffect(() => {
-  async function loadYears() {
-    try {
-      const res = await getAvailableYears();
-
-      setMinYear(res.min_year);
-      setMaxYear(res.max_year);
-
-      setYear((prev) => prev ?? res.max_year);
-    } catch (error) {
-      console.error("Erro ao carregar anos:", error);
-    }
-  }
-
-  loadYears();
-}, []);
-
   useEffect(() => {
-    async function loadGrafico() {
-      if (!selectedYear || results.length === 0) {
-        setGraficoData([]);
+    async function loadGraficoCasos() {
+      if (!year) {
+        setGraficoEpi([]);
         return;
       }
 
       try {
-        const maxWeekFromResults = getMaxWeekFromResults(results, selectedYear);
-        const data = await calculateAllWeekMetrics(
-          results,
-          selectedYear,
-          maxWeekFromResults
-        );
+        const serie = await getWeeklyCasesByYear(year);
 
-        setGraficoData(data);
+        setGraficoEpi(
+          serie.map((item) => ({
+            semana: `Semana ${item.week}`,
+            casos: item.confirmed_cases,
+          }))
+        );
       } catch (error) {
-        console.error("Erro ao carregar gráfico:", error);
-        setGraficoData([]);
+        console.error("Erro ao carregar gráfico de casos confirmados:", error);
+        setGraficoEpi([]);
       }
     }
 
-    loadGrafico();
-  }, [selectedYear, results]);
-useEffect(() => {
-  async function loadGraficoCasos() {
-    if (!year) {
-      setGraficoEpi([]);
-      return;
-    }
-
-    try {
-      console.log("ANO DO GRAFICO:", year);
-
-      const serie = await getWeeklyCasesByYear(year);
-      console.log("SERIE BRUTA NORMALIZADA:", serie);
-
-      const formatted = serie.map((item) => ({
-        semana: `Semana ${item.week}`,
-        casos: item.confirmed_cases,
-      }));
-
-      console.log("SERIE FORMATADA:", formatted);
-
-      setGraficoEpi(formatted);
-    } catch (error) {
-      console.error("Erro ao carregar gráfico de casos confirmados:", error);
-      setGraficoEpi([]);
-    }
-  }
-
-  loadGraficoCasos();
-}, [year]);
-
-  if (!metrics) return <p>Carregando...</p>;
+    loadGraficoCasos();
+  }, [year]);
 
   return (
     <main className="relative min-h-dvh bg-white">
       <Slide />
 
       <section className="mx-auto flex flex-col">
-      <div className="flex items-center mt-20 mb-20 justify-between ">
-            <div className="flex flex-start pl-20">
-              <h2 className="text-5xl text-blue-900 font-bold mr-50">
-                Indicadores-Chave (KPIs)
-              </h2>
-            </div>
-            <div className="mr-20 ">
-              {periodType !== "year" && (
-                <select
-                  className="text-black bg-gray-100 w-30 text-sm h-10 p-2 rounded border border-gray-300 mr-8"
-                  onChange={(e) => setPeriodValue(Number(e.target.value))}
-                >
-                  {periodType === "month" &&
-                    months.map((m) => (
-                      <option key={m} value={m}>
-                        Mês {m}
-                      </option>
-                    ))}
-
-                  {periodType === "week" &&
-                    weeks.map((w) => (
-                      <option key={w} value={w}>
-                        Semana {w}
-                      </option>
-                    ))}
-                </select>
-              )}
-              <select
-                value={year ?? ""}
-                className="text-black text-sm bg-gray-100 w-28 h-10 p-2 rounded border border-gray-300 mr-8"
-                onChange={(e) => setYear(Number(e.target.value))}
-              >
-                {yearsForSelect.map((y) => (
-                  <option key={y} value={y}>
-                   Ano {y}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="text-black text-sm bg-gray-100 w-60 h-10 p-2 rounded border border-gray-300"
-                onChange={(e) => {
-                  const type = e.target.value as "year" | "month" | "week";
-                  setPeriodType(type);
-                  if (type === "month") setPeriodValue(1);
-                  if (type === "week") setPeriodValue(1);
-                  if (type === "year") setPeriodValue(null);
-                }}
-              >
-                <option value="year">Ano completo</option>
-                <option value="month">Por mês</option>
-                <option value="week">Por semana</option>
-              </select>
-            </div>
+        <div className="flex items-center mt-20 mb-20 justify-between ">
+          <div className="flex flex-start pl-20">
+            <h2 className="text-5xl text-blue-900 font-bold mr-50">
+              Indicadores-Chave (KPIs)
+            </h2>
           </div>
+          <div className="mr-20 ">
+            {periodType !== "year" && (
+              <select
+                className="text-black bg-gray-100 w-30 text-sm h-10 p-2 rounded border border-gray-300 mr-8"
+                onChange={(e) => setPeriodValue(Number(e.target.value))}
+                value={periodValue ?? ""}
+              >
+                {periodType === "month" &&
+                  months.map((m) => (
+                    <option key={m} value={m}>
+                      Mês {m}
+                    </option>
+                  ))}
 
-        <Card indicadores={indicadores} loading={loading} periodType={periodType} />
-      </section>
+                {periodType === "week" &&
+                  weeks.map((w) => (
+                    <option key={w} value={w}>
+                      Semana {w}
+                    </option>
+                  ))}
+              </select>
+            )}
 
-      <section className="mx-auto flex min-h-dvh justify-center">
-        <Mapas />
-      </section>
+            <select
+              className="text-black bg-gray-100 w-30 text-sm h-10 p-2 rounded border border-gray-300 mr-8"
+              onChange={(e) =>
+                setPeriodType(e.target.value as "year" | "month" | "week")
+              }
+              value={periodType}
+            >
+              <option value="year">Ano</option>
+              <option value="month">Mês</option>
+              <option value="week">Semana</option>
+            </select>
 
-      <section className="mx-auto flex flex-col w-full">
-        <div className="mb-20 px-20">
+            <select
+              className="text-black bg-gray-100 w-30 text-sm h-10 p-2 rounded border border-gray-300"
+              onChange={(e) => setYear(Number(e.target.value))}
+              value={year ?? ""}
+            >
+              {yearsForSelect.map((y) => (
+                <option key={y} value={y}>
+                  Ano {y}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <Card
+          indicadores={indicadores}
+          loading={loading}
+          periodType={periodType}
+        />
+
+        <div className="mx-20 mt-20">
+          <h2 className="text-5xl text-blue-900 font-bold mb-10">
+            Indicadores entomológicos
+          </h2>
+
           <IndicadoresEntomologicos
             selectedYear={selectedYear}
             setSelectedYear={setSelectedYear}
-            availableYears={availableYears}
+            availableYears={publicYears}
             selectedWeek={selectedWeek}
             setSelectedWeek={setSelectedWeek}
             availableWeeks={availableWeeks}
             metrics={metrics}
-            loading={loading}
+            loading={false}
           />
+        </div>
 
-          <div className="flex flex-col">
-            <h2 className="flex item text-5xl text-blue-900 font-bold mt-10 mb-20">
-              Evolução temporal
-            </h2>
+        <div className="mx-20 mt-20">
+          <GraficoOVos
+            data={graficoData}
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
+            availableYears={publicYears}
+          />
+        </div>
 
-            <GraficoOVos
-              data={graficoData}
-              selectedYear={selectedYear}
-              setSelectedYear={setSelectedYear}
-              availableYears={availableYears}
-            />
+        <div className="mx-20 mt-20">
+          <GraficoCasos
+            data={graficoEpi}
+            selectedYear={year}
+            setSelectedYear={setYear}
+            availableYears={yearsForSelect}
+          />
+        </div>
 
-            <div className="w-full h-[350px]">
-              <GraficoCasos
-                data={graficoEpi}
-                selectedYear={year}
-                setSelectedYear={setYear}
-                availableYears={yearsForSelect}
-              />
-            </div>
-          </div>
+        <div className="mx-20 mt-20">
+          <Mapas />
+        </div>
+
+        <div className="mt-20">
+          <Footer />
         </div>
       </section>
-
-      <Footer />
     </main>
   );
 }

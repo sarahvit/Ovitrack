@@ -9,7 +9,6 @@ export interface LocationInput {
     street_number?: string | null;
     macro_zone?: string | null;
     micro_zone?: string | null;
-    zone?: string | null;
 }
 
 export interface LocationRead extends LocationInput {

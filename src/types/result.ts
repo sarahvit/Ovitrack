@@ -28,7 +28,6 @@ export type ResultLocation = {
     street_number: string | null;
     macro_zone: string | null;
     micro_zone: string | null;
-    zone: string | null;
 };
 
 export type ResultProcessing = {
@@ -51,4 +50,31 @@ export type ResultListResponse = {
     page: number;
     size: number;
     total: number;
+};
+
+export type PublicResultDistributionItem = {
+    label: string;
+    min_egg_count: number | null;
+    max_egg_count: number | null;
+    count: number;
+};
+
+export type PublicResultDashboardRead = {
+    year: number;
+    epidemiological_week: number | null;
+    active_ovitraps: number;
+    ovitraps_with_collection: number;
+    total_eggs: number;
+    average_eggs: number;
+    distribution: PublicResultDistributionItem[];
+};
+
+export type PublicResultWeekOption = {
+    value: number;
+    label: string;
+};
+
+export type PublicResultFilterOptionsRead = {
+    years: number[];
+    weeks: PublicResultWeekOption[];
 };

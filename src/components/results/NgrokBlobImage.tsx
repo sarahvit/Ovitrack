@@ -33,11 +33,15 @@ export default function NgrokBlobImage({
                 setFailed(false);
 
                 const url = buildImageUrl(path);
-                console.log("IMAGE URL:", url);
+                const token =
+                    typeof window !== "undefined"
+                        ? localStorage.getItem("token")
+                        : null;
 
                 const response = await fetch(url, {
                     headers: {
                         "ngrok-skip-browser-warning": "1",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
                     },
                 });
 
@@ -48,8 +52,7 @@ export default function NgrokBlobImage({
                 const blob = await response.blob();
                 objectUrl = URL.createObjectURL(blob);
                 setBlobSrc(objectUrl);
-            } catch (error) {
-                console.error("Erro ao carregar imagem:", error);
+            } catch {
                 setFailed(true);
                 setBlobSrc("");
             }
