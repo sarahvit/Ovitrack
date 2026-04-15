@@ -298,59 +298,60 @@ useEffect(() => {
       <Slide />
 
       <section className="mx-auto flex flex-col">
-        <div className="flex items-center gap-10 mt-20 mb-20 px-20">
-          <h2 className="text-5xl text-blue-900 font-bold mr-30">
-            Indicadores-Chave (KPIs)
-          </h2>
+      <div className="flex items-center mt-20 mb-20 justify-between ">
+            <div className="flex flex-start pl-20">
+              <h2 className="text-5xl text-blue-900 font-bold mr-50">
+                Indicadores-Chave (KPIs)
+              </h2>
+            </div>
+            <div className="mr-20 ">
+              {periodType !== "year" && (
+                <select
+                  className="text-black bg-gray-100 w-30 text-sm h-10 p-2 rounded border border-gray-300 mr-8"
+                  onChange={(e) => setPeriodValue(Number(e.target.value))}
+                >
+                  {periodType === "month" &&
+                    months.map((m) => (
+                      <option key={m} value={m}>
+                        Mês {m}
+                      </option>
+                    ))}
 
-          <select
-            className="text-black text-sm bg-gray-100 w-40 h-10 p-2 rounded border border-gray-300"
-            onChange={(e) => {
-              const type = e.target.value as "year" | "month" | "week";
-              setPeriodType(type);
-              if (type === "month") setPeriodValue(1);
-              if (type === "week") setPeriodValue(1);
-              if (type === "year") setPeriodValue(null);
-            }}
-          >
-            <option value="year">Ano completo</option>
-            <option value="month">Por mês</option>
-            <option value="week">Por semana</option>
-          </select>
-
-          <select
-            value={year ?? ""}
-            className="text-black text-sm bg-gray-100 w-70 h-10 p-2 rounded border border-gray-300"
-            onChange={(e) => setYear(Number(e.target.value))}
-          >
-            {yearsForSelect.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-
-          {periodType !== "year" && (
-            <select
-              className="text-black bg-gray-100 w-50 text-sm h-10 p-2 rounded border border-gray-300"
-              onChange={(e) => setPeriodValue(Number(e.target.value))}
-            >
-              {periodType === "month" &&
-                months.map((m) => (
-                  <option key={m} value={m}>
-                    Mês {m}
+                  {periodType === "week" &&
+                    weeks.map((w) => (
+                      <option key={w} value={w}>
+                        Semana {w}
+                      </option>
+                    ))}
+                </select>
+              )}
+              <select
+                value={year ?? ""}
+                className="text-black text-sm bg-gray-100 w-28 h-10 p-2 rounded border border-gray-300 mr-8"
+                onChange={(e) => setYear(Number(e.target.value))}
+              >
+                {yearsForSelect.map((y) => (
+                  <option key={y} value={y}>
+                   Ano {y}
                   </option>
                 ))}
-
-              {periodType === "week" &&
-                weeks.map((w) => (
-                  <option key={w} value={w}>
-                    Semana {w}
-                  </option>
-                ))}
-            </select>
-          )}
-        </div>
+              </select>
+              <select
+                className="text-black text-sm bg-gray-100 w-60 h-10 p-2 rounded border border-gray-300"
+                onChange={(e) => {
+                  const type = e.target.value as "year" | "month" | "week";
+                  setPeriodType(type);
+                  if (type === "month") setPeriodValue(1);
+                  if (type === "week") setPeriodValue(1);
+                  if (type === "year") setPeriodValue(null);
+                }}
+              >
+                <option value="year">Ano completo</option>
+                <option value="month">Por mês</option>
+                <option value="week">Por semana</option>
+              </select>
+            </div>
+          </div>
 
         <Card indicadores={indicadores} loading={loading} periodType={periodType} />
       </section>

@@ -29,46 +29,55 @@ export type TimeFiltersResponse = {
 };
 
 type ApiResponse<T> = {
-    items: T;
-    error: string | null;
+    items?: T;
+    error?: string | null;
 };
 
-function unwrapResponse<T>(data: ApiResponse<T> | undefined | null): T {
+function unwrapResponse<T>(data: ApiResponse<T> | T | undefined | null): T {
     if (!data) {
         throw new Error("EMPTY_RESPONSE");
     }
 
-    if (data.error) {
-        throw new Error(data.error);
+    if (typeof data === "object" && data !== null && "error" in data) {
+        const wrapped = data as ApiResponse<T>;
+
+        if (wrapped.error) {
+            throw new Error(wrapped.error);
+        }
+
+        if (wrapped.items !== undefined) {
+            return wrapped.items;
+        }
     }
 
-    return data.items;
+    return data as T;
 }
 
 function logAxiosError(prefix: string, error: unknown) {
-  if (axios.isAxiosError(error)) {
-    console.log(prefix);
-    console.log("status:", error.response?.status);
-    console.log("url:", error.config?.baseURL, error.config?.url);
-    console.log(
-      "data:",
-      JSON.stringify(error.response?.data, null, 2)
-    );
-  } else {
-    console.log(prefix, error);
-  }
+    if (axios.isAxiosError(error)) {
+        console.log(prefix);
+        console.log("status:", error.response?.status);
+        console.log("url:", error.config?.baseURL, error.config?.url);
+        console.log("data:", JSON.stringify(error.response?.data, null, 2));
+    } else {
+        console.log(prefix, error);
+    }
 }
 
 export async function getAvailableYears(): Promise<{ min_year: number; max_year: number }> {
     try {
-        const { data } =
-            await indicadoresClient.get<ApiResponse<{ min_year: number; max_year: number }>>(
-                "/epi-indicators/available-years"
-            );
+        const { data } = await indicadoresClient.get<
+            ApiResponse<{ min_year: number; max_year: number }> | { min_year: number; max_year: number }
+        >("/epi-indicators/available-years");
 
         console.log("RAW AVAILABLE YEARS RESPONSE:", data);
 
-        return unwrapResponse(data);
+        const items = unwrapResponse<{ min_year: number; max_year: number }>(data);
+
+        return {
+            min_year: items.min_year,
+            max_year: items.max_year,
+        };
     } catch (error) {
         logAxiosError("Erro em getAvailableYears", error);
         throw error;
@@ -77,14 +86,13 @@ export async function getAvailableYears(): Promise<{ min_year: number; max_year:
 
 export async function getTimeFilters(year: number): Promise<TimeFiltersResponse> {
     try {
-        const { data } =
-            await indicadoresClient.get<ApiResponse<{ max_month: number; max_week: number }>>(
-                `/epi-indicators/${year}/available-periods`
-            );
+        const { data } = await indicadoresClient.get<
+            ApiResponse<{ max_month: number; max_week: number }> | { max_month: number; max_week: number }
+        >(`/epi-indicators/${year}/available-periods`);
 
         console.log("RAW AVAILABLE PERIODS RESPONSE:", data);
 
-        const items = unwrapResponse(data);
+        const items = unwrapResponse<{ max_month: number; max_week: number }>(data);
 
         return {
             min_year: 2014,
@@ -100,18 +108,26 @@ export async function getTimeFilters(year: number): Promise<TimeFiltersResponse>
 
 export async function getIndicadoresAno(year: number): Promise<IndicadoresEpi> {
     try {
-        const { data } =
-            await indicadoresClient.get<
-                ApiResponse<{
-                    yearly_notified_cases: number;
-                    yearly_confirmed_cases: number;
-                    yearly_confirmation_rate: number;
-                }>
-            >(`/epi-indicators/${year}`);
+        const { data } = await indicadoresClient.get<
+            | ApiResponse<{
+                yearly_notified_cases: number;
+                yearly_confirmed_cases: number;
+                yearly_confirmation_rate: number;
+            }>
+            | {
+                yearly_notified_cases: number;
+                yearly_confirmed_cases: number;
+                yearly_confirmation_rate: number;
+            }
+        >(`/epi-indicators/${year}`);
 
         console.log("RAW YEAR INDICATORS RESPONSE:", data);
 
-        const items = unwrapResponse(data);
+        const items = unwrapResponse<{
+            yearly_notified_cases: number;
+            yearly_confirmed_cases: number;
+            yearly_confirmation_rate: number;
+        }>(data);
 
         return {
             notified_cases: items.yearly_notified_cases ?? 0,
@@ -126,18 +142,26 @@ export async function getIndicadoresAno(year: number): Promise<IndicadoresEpi> {
 
 export async function getIndicadoresMensais(year: number, month: number): Promise<IndicadoresEpi> {
     try {
-        const { data } =
-            await indicadoresClient.get<
-                ApiResponse<{
-                    monthly_notified_cases: number;
-                    monthly_confirmed_cases: number;
-                    monthly_confirmation_rate: number;
-                }>
-            >(`/epi-indicators/${year}/monthly/${month}`);
+        const { data } = await indicadoresClient.get<
+            | ApiResponse<{
+                monthly_notified_cases: number;
+                monthly_confirmed_cases: number;
+                monthly_confirmation_rate: number;
+            }>
+            | {
+                monthly_notified_cases: number;
+                monthly_confirmed_cases: number;
+                monthly_confirmation_rate: number;
+            }
+        >(`/epi-indicators/${year}/monthly/${month}`);
 
         console.log("RAW MONTH INDICATORS RESPONSE:", data);
 
-        const items = unwrapResponse(data);
+        const items = unwrapResponse<{
+            monthly_notified_cases: number;
+            monthly_confirmed_cases: number;
+            monthly_confirmation_rate: number;
+        }>(data);
 
         return {
             notified_cases: items.monthly_notified_cases ?? 0,
@@ -152,18 +176,26 @@ export async function getIndicadoresMensais(year: number, month: number): Promis
 
 export async function getIndicadoresSemanais(year: number, week: number): Promise<IndicadoresEpi> {
     try {
-        const { data } =
-            await indicadoresClient.get<
-                ApiResponse<{
-                    weekly_notified_cases: number;
-                    weekly_confirmed_cases: number;
-                    weekly_confirmation_rate: number;
-                }>
-            >(`/epi-indicators/${year}/weekly/${week}`);
+        const { data } = await indicadoresClient.get<
+            | ApiResponse<{
+                weekly_notified_cases: number;
+                weekly_confirmed_cases: number;
+                weekly_confirmation_rate: number;
+            }>
+            | {
+                weekly_notified_cases: number;
+                weekly_confirmed_cases: number;
+                weekly_confirmation_rate: number;
+            }
+        >(`/epi-indicators/${year}/weekly/${week}`);
 
         console.log("RAW WEEK INDICATORS RESPONSE:", data);
 
-        const items = unwrapResponse(data);
+        const items = unwrapResponse<{
+            weekly_notified_cases: number;
+            weekly_confirmed_cases: number;
+            weekly_confirmation_rate: number;
+        }>(data);
 
         return {
             notified_cases: items.weekly_notified_cases ?? 0,
@@ -180,14 +212,23 @@ export async function getAllWeekly(year: number, maxWeek: number): Promise<Weekl
     const requests = Array.from({ length: maxWeek }, (_, i) =>
         indicadoresClient
             .get<
-                ApiResponse<{
+                | ApiResponse<{
                     weekly_notified_cases: number;
                     weekly_confirmed_cases: number;
                     weekly_confirmation_rate: number;
                 }>
+                | {
+                    weekly_notified_cases: number;
+                    weekly_confirmed_cases: number;
+                    weekly_confirmation_rate: number;
+                }
             >(`/epi-indicators/${year}/weekly/${i + 1}`)
             .then(({ data }) => {
-                const items = unwrapResponse(data);
+                const items = unwrapResponse<{
+                    weekly_notified_cases: number;
+                    weekly_confirmed_cases: number;
+                    weekly_confirmation_rate: number;
+                }>(data);
 
                 return {
                     week: i + 1,
@@ -208,17 +249,20 @@ export async function getAllWeekly(year: number, maxWeek: number): Promise<Weekl
 
 export async function getWeeklyCasesByYear(year: number): Promise<WeeklyCasesPoint[]> {
     try {
-        const { data } =
-            await indicadoresClient.get<
-                ApiResponse<
-                    | Array<{ week: number; confirmed_cases: number }>
-                    | { status?: string; year?: number; data?: Record<string, number | null> }
-                >
-            >(`/epi-indicators/${year}/weekly-cases`);
+        const { data } = await indicadoresClient.get<
+            | ApiResponse<
+                | Array<{ week: number; confirmed_cases: number }>
+                | { status?: string; year?: number; data?: Record<string, number | null> }
+            >
+            | Array<{ week: number; confirmed_cases: number }>
+            | { status?: string; year?: number; data?: Record<string, number | null> }
+        >(`/epi-indicators/${year}/weekly-cases`);
 
         console.log("RAW WEEKLY CASES RESPONSE:", data);
 
-        const items = unwrapResponse(data);
+        const items = unwrapResponse<
+            Array<{ week: number; confirmed_cases: number }> | { status?: string; year?: number; data?: Record<string, number | null> }
+        >(data);
 
         if (Array.isArray(items)) {
             return items
